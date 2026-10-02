@@ -77,7 +77,7 @@ jobs:
 
       - name: Configure Meson
         run: |
-          cd virgl-23.9.1
+          cd virgl-23.1.9
           meson setup build \
             --cross-file ../cross_arm64.txt \
             -Dstrip=true \
@@ -95,12 +95,12 @@ jobs:
 
       - name: Compile Mesa
         run: |
-          cd virgl-23.9.1
+          cd virgl-23.1.9
           ninja -j$(nproc) -C build
 
       - name: Install & Package Artifacts
         run: |
-          cd virgl-23.9.1
+          cd virgl-23.1.9
           DESTDIR=$(pwd)/../mesa_out ninja -C build install
           cd ../mesa_out
           tar -czvf ../mesa-virgl-arm64.tar.gz .
