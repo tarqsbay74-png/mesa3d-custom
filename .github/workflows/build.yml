@@ -1,0 +1,91 @@
+name: Build Mesa3D ARM64 for Winlator
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-arm64:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Architecture & Dependencies
+        run: |
+          sudo dpkg --add-architecture arm64
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc-aarch64-linux-gnu \
+            g++-aarch64-linux-gnu \
+            meson \
+            ninja-build \
+            pkg-config \
+            python3-mako \
+            bison \
+            flex \
+            gettext \
+            libx11-dev:arm64 \
+            libxext-dev:arm64 \
+            libxdamage-dev:arm64 \
+            libxfixes-dev:arm64 \
+            libx11-xcb-dev:arm64 \
+            libxcb-glx0-dev:arm64 \
+            libxcb-shm0-dev:arm64 \
+            libdrm-dev:arm64 \
+            libxrandr-dev:arm64
+
+      - name: Create Meson Cross File
+        run: |
+          cat << 'EOF' > cross_arm64.txt
+          [binaries]
+          c = 'aarch64-linux-gnu-gcc'
+          cpp = 'aarch64-linux-gnu-g++'
+          ar = 'aarch64-linux-gnu-ar'
+          strip = 'aarch64-linux-gnu-strip'
+          pkgconfig = 'aarch64-linux-gnu-pkg-config'
+
+          [host_machine]
+          system = 'linux'
+          cpu_family = 'aarch64'
+          cpu = 'armv8-a'
+          endian = 'little'
+          EOF
+
+      - name: Configure Meson
+        run: |
+          cd virgl-23.9.1
+          meson setup build \
+            --cross-file ../cross_arm64.txt \
+            -Dstrip=true \
+            -Dgallium-va=disabled \
+            -Dgallium-drivers=virgl \
+            -Ddri3=disabled \
+            -Dllvm=disabled \
+            -Dshared-llvm=disabled \
+            -Dvulkan-drivers= \
+            -Dglx=xlib \
+            -Dplatforms=x11 \
+            -Dlmsensors=disabled \
+            -Dprefix=/data/data/com.winlator/files/rootfs/usr \
+            -Dbuildtype=release
+
+      - name: Compile Mesa
+        run: |
+          cd virgl-23.9.1
+          ninja -j$(nproc) -C build
+
+      - name: Install & Package Artifacts
+        run: |
+          cd virgl-23.9.1
+          DESTDIR=$(pwd)/../mesa_out ninja -C build install
+          cd ../mesa_out
+          tar -czvf ../mesa-virgl-arm64.tar.gz .
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mesa-virgl-arm64
+          path: mesa-virgl-arm64.tar.gz
