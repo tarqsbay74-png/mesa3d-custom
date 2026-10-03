@@ -48,6 +48,8 @@ jobs:
             bison \
             flex \
             gettext \
+            zlib1g-dev:arm64 \
+            libexpat1-dev:arm64 \
             libx11-dev:arm64 \
             libxext-dev:arm64 \
             libxdamage-dev:arm64 \
@@ -61,7 +63,7 @@ jobs:
             libxrandr-dev:arm64
 
           # إنشاء رابط رمزي لـ pkg-config الخاص بالتجميع العابر
-          sudo ln -s /usr/bin/pkg-config /usr/bin/aarch64-linux-gnu-pkg-config
+          sudo ln -sf /usr/bin/pkg-config /usr/bin/aarch64-linux-gnu-pkg-config
 
       - name: Create Meson Cross File
         run: |
@@ -86,8 +88,10 @@ jobs:
       - name: Configure Meson
         run: |
           cd virgl-23.1.9
+          rm -rf subprojects/zlib* subprojects/expat*
           meson setup build \
             --cross-file ../cross_arm64.txt \
+            --wrap-mode=nodownload \
             -Dstrip=true \
             -Dgallium-va=disabled \
             -Dgallium-drivers=virgl \
