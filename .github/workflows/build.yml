@@ -55,6 +55,8 @@ jobs:
             libx11-xcb-dev:arm64 \
             libxcb-glx0-dev:arm64 \
             libxcb-shm0-dev:arm64 \
+            libxcb-randr0-dev:arm64 \
+            libxcb-xfixes0-dev:arm64 \
             libdrm-dev:arm64 \
             libxrandr-dev:arm64
 
