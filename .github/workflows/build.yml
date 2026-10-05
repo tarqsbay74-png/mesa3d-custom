@@ -38,6 +38,7 @@ jobs:
           EOF'
 
           sudo apt-get update
+
           sudo apt-get install -y \
             gcc-aarch64-linux-gnu \
             g++-aarch64-linux-gnu \
@@ -88,18 +89,22 @@ jobs:
       - name: Configure Meson
         run: |
           cd virgl-23.1.9
+
           rm -rf subprojects/zlib* subprojects/expat*
+
           meson setup build \
             --cross-file ../cross_arm64.txt \
             --wrap-mode=nodownload \
             -Dstrip=true \
             -Dgallium-va=disabled \
             -Dgallium-drivers=virgl \
+            -Ddri=true \
             -Ddri3=disabled \
             -Dllvm=disabled \
             -Dshared-llvm=disabled \
             -Dvulkan-drivers= \
-            -Dglx=xlib \
+            -Dglx=dri \
+            -Degl=enabled \
             -Dplatforms=x11 \
             -Dlmsensors=disabled \
             -Dprefix=/data/data/com.winlator/files/rootfs/usr \
@@ -113,7 +118,9 @@ jobs:
       - name: Install & Package Artifacts
         run: |
           cd virgl-23.1.9
+
           DESTDIR=$(pwd)/../mesa_out ninja -C build install
+
           cd ../mesa_out
           tar -czvf ../mesa-virgl-arm64.tar.gz .
 
