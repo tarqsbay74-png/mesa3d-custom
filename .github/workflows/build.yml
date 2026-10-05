@@ -98,7 +98,6 @@ jobs:
             -Dstrip=true \
             -Dgallium-va=disabled \
             -Dgallium-drivers=virgl \
-            -Ddri=true \
             -Ddri3=disabled \
             -Dllvm=disabled \
             -Dshared-llvm=disabled \
