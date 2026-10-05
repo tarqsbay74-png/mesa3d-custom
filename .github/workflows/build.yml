@@ -102,7 +102,7 @@ jobs:
             -Dllvm=disabled \
             -Dshared-llvm=disabled \
             -Dvulkan-drivers= \
-            -Dglx=dri \
+            -Dglx=xlib \
             -Degl=enabled \
             -Dplatforms=x11 \
             -Dlmsensors=disabled \
