@@ -17,7 +17,7 @@ jobs:
         run: |
           sudo dpkg --add-architecture arm64
 
-          # إزالة تعارضات ملفات APT الخاصة بـ Ubuntu 24.04
+          # إزالة مصادر Ubuntu التي قد تسبب تعارضًا
           sudo rm -f /etc/apt/sources.list.d/ubuntu.sources
           sudo rm -f /etc/apt/sources.list.d/arm64-sources.list
 
@@ -60,10 +60,10 @@ jobs:
             libxcb-shm0-dev:arm64 \
             libxcb-randr0-dev:arm64 \
             libxcb-xfixes0-dev:arm64 \
+            libxcb-dri2-0-dev:arm64 \
             libdrm-dev:arm64 \
             libxrandr-dev:arm64
 
-          # إنشاء رابط رمزي لـ pkg-config الخاص بالتجميع العابر
           sudo ln -sf /usr/bin/pkg-config /usr/bin/aarch64-linux-gnu-pkg-config
 
       - name: Create Meson Cross File
@@ -90,6 +90,7 @@ jobs:
         run: |
           cd virgl-23.1.9
 
+          rm -rf build
           rm -rf subprojects/zlib* subprojects/expat*
 
           meson setup build \
@@ -102,7 +103,7 @@ jobs:
             -Dllvm=disabled \
             -Dshared-llvm=disabled \
             -Dvulkan-drivers= \
-            -Dglx=xlib \
+            -Dglx=dri \
             -Degl=enabled \
             -Dplatforms=x11 \
             -Dlmsensors=disabled \
@@ -118,10 +119,39 @@ jobs:
         run: |
           cd virgl-23.1.9
 
+          rm -rf ../mesa_out
+
           DESTDIR=$(pwd)/../mesa_out ninja -C build install
 
           cd ../mesa_out
+
           tar -czvf ../mesa-virgl-arm64.tar.gz .
+
+      - name: Check Built Libraries
+        run: |
+          cd mesa_out/data/data/com.winlator/files/rootfs/usr
+
+          echo "=== Mesa libraries ==="
+          find . -type f \( \
+            -name "*.so" \
+            -o -name "*.so.*" \
+          \) -print
+
+          echo
+          echo "=== EGL dependencies ==="
+
+          for lib in $(find . -type f -name "libEGL.so*"); do
+            echo "---- $lib ----"
+            aarch64-linux-gnu-readelf -d "$lib" | grep NEEDED || true
+          done
+
+          echo
+          echo "=== GL dependencies ==="
+
+          for lib in $(find . -type f -name "libGL.so*"); do
+            echo "---- $lib ----"
+            aarch64-linux-gnu-readelf -d "$lib" | grep NEEDED || true
+          done
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
