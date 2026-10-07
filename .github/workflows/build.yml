@@ -17,11 +17,10 @@ jobs:
         run: |
           sudo dpkg --add-architecture arm64
 
-          # إزالة مصادر Ubuntu التي قد تسبب تعارضًا
           sudo rm -f /etc/apt/sources.list.d/ubuntu.sources
           sudo rm -f /etc/apt/sources.list.d/arm64-sources.list
 
-          # مصادر amd64
+          # Ubuntu amd64 repositories
           sudo bash -c 'cat <<EOF > /etc/apt/sources.list
           deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu/ noble main restricted universe multiverse
           deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu/ noble-updates main restricted universe multiverse
@@ -29,7 +28,7 @@ jobs:
           deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu/ noble-security main restricted universe multiverse
           EOF'
 
-          # مصادر arm64
+          # Ubuntu arm64 repositories
           sudo bash -c 'cat <<EOF > /etc/apt/sources.list.d/arm64.list
           deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse
           deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse
@@ -62,7 +61,8 @@ jobs:
             libxcb-xfixes0-dev:arm64 \
             libxcb-dri2-0-dev:arm64 \
             libdrm-dev:arm64 \
-            libxrandr-dev:arm64
+            libxrandr-dev:arm64 \
+            libxxf86vm-dev:arm64
 
           sudo ln -sf /usr/bin/pkg-config /usr/bin/aarch64-linux-gnu-pkg-config
 
@@ -131,14 +131,14 @@ jobs:
         run: |
           cd mesa_out/data/data/com.winlator/files/rootfs/usr
 
-          echo "=== Mesa libraries ==="
+          echo "=== Installed Mesa files ==="
           find . -type f \( \
             -name "*.so" \
             -o -name "*.so.*" \
           \) -print
 
           echo
-          echo "=== EGL dependencies ==="
+          echo "=== EGL libraries ==="
 
           for lib in $(find . -type f -name "libEGL.so*"); do
             echo "---- $lib ----"
@@ -146,12 +146,17 @@ jobs:
           done
 
           echo
-          echo "=== GL dependencies ==="
+          echo "=== GL libraries ==="
 
           for lib in $(find . -type f -name "libGL.so*"); do
             echo "---- $lib ----"
             aarch64-linux-gnu-readelf -d "$lib" | grep NEEDED || true
           done
+
+          echo
+          echo "=== DRI libraries ==="
+
+          find . -type f -name "*dri*.so*" -print || true
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
